@@ -40,8 +40,8 @@ const validateUserCreate = [
   body('profile.age').isInt({ min: 18 }).withMessage('Must be at least 18 years old'),
   body('profile.isStudent').isBoolean().withMessage('Must be a boolean value'),
   body('profile.education.degree')
-    .if(body('profile.isStudent').equals(false))
-    .notEmpty().withMessage('Degree is required for non-students'),
+    .if((value, { req }) => req.body.profile.isStudent === true)
+    .notEmpty().withMessage('Degree is required for students'),
   
   // Account validations
   body('account').exists().withMessage('Account info is required'),
