@@ -2,7 +2,7 @@
 const { test, expect } = require('@playwright/test');
 
 const API_URL = 'http://localhost:3000/api';
-const AUTH_TOKEN = 'fake-jwt-token';
+// const AUTH_TOKEN = 'fake-jwt-token';
 
 test.describe('API Validation Tests', () => {
   let authToken;
@@ -16,6 +16,7 @@ test.describe('API Validation Tests', () => {
   });
 
   test.only('Create user with valid data', async ({ request }) => {
+    console.log('authToken', authToken);
     const userData = {
       profile: {
         name: 'John Doe',
@@ -39,6 +40,8 @@ test.describe('API Validation Tests', () => {
       headers: { 'Content-Type': 'application/json' }
     });
     
+    console.log('response', await response.json());
+    console.log('response.status()', response.status());
     expect(response.status()).toBe(201);
     const body = await response.json();
     expect(body.id).toBeDefined();

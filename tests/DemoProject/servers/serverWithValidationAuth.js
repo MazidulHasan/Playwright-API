@@ -36,11 +36,11 @@ app.use((req, res, next) => {
 const validateUserCreate = [
   // Profile validations
   body('profile').exists().withMessage('Profile is required'),
-  body('profile.name').isString().trim().notEmpty().withMessage('Name is required'),
+  body('profile.name').isString().withMessage('Must be a string').trim().notEmpty().withMessage('Name is required').isLength({ min: 2, max: 50 }).withMessage('Must be between 2-50 characters'),
   body('profile.age').isInt({ min: 18 }).withMessage('Must be at least 18 years old'),
   body('profile.isStudent').isBoolean().withMessage('Must be a boolean value'),
   body('profile.education.degree')
-    .if((value, { req }) => req.body.profile.isStudent === true)
+    .if(body('profile.isStudent').equals('true'))
     .notEmpty().withMessage('Degree is required for students'),
   
   // Account validations
@@ -104,7 +104,7 @@ app.post('/api/createUser', validateUserCreate, (req, res) => {
     id: faker.string.uuid(),
     createdAt: new Date().toISOString(),
     verified: false,
-    status: 'pending'
+    status: faker.helpers.arrayElement(['active', 'pending', 'inactive'])
   });
 });
 
