@@ -3,6 +3,17 @@ const { test, expect } = require('@playwright/test');
 
 const API_URL = 'http://localhost:3000/api';
 // const AUTH_TOKEN = 'fake-jwt-token';
+const generateFakeUserData = require('../fakeDataGenerate/userFakeData');
+const userResponseSchema = require('../schema/userSchemaForAJV');
+
+
+const { faker } = require('@faker-js/faker');
+const Ajv = require('ajv').default;
+const addFormats = require('ajv-formats');
+
+
+const ajv = new Ajv();
+addFormats(ajv);
 
 test.describe('API Validation Tests', () => {
   let authToken;
@@ -15,8 +26,7 @@ test.describe('API Validation Tests', () => {
     authToken = (await response.json()).token;
   });
 
-  test.only('Create user with valid data', async ({ request }) => {
-    console.log('authToken', authToken);
+  test('Create user with valid data :: Manual', async ({ request }) => {
     const userData = {
       profile: {
         name: 'John Doe',
@@ -37,16 +47,38 @@ test.describe('API Validation Tests', () => {
 
     const response = await request.post(`${API_URL}/createUser`, {
       data: userData,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' ,'Authorization': `Bearer ${authToken}`}
     });
-    
-    console.log('response', await response.json());
-    console.log('response.status()', response.status());
+  
     expect(response.status()).toBe(201);
     const body = await response.json();
     expect(body.id).toBeDefined();
     expect(body.createdAt).toBeDefined();
   });
+
+
+  test.only('Create user with valid data :: Faker', async ({ request }) => {
+    const fakeUser = generateFakeUserData();
+    const res = await request
+      .post(`${API_URL}/createUser`, {
+        data: fakeUser,
+        headers: { 'Content-Type': 'application/json' ,'Authorization': `Bearer ${authToken}`}
+      })
+      
+      const responsejson = await res.json()
+      const validate = ajv.compile(userResponseSchema.useResponseSchema);
+      const valid = validate(responsejson);
+  
+      if (!valid) {
+        console.error('AJV Validation Errors:',validate.errors);
+      }
+  
+      expect(valid).toBe(true);
+      expect(responsejson.profile.name).toBe(fakeUser.profile.name);
+      expect(responsejson.account.email).toBe(fakeUser.account.email);
+  });
+
+
 
   test('Create user validation failures', async ({ request }) => {
     const invalidUsers = [
