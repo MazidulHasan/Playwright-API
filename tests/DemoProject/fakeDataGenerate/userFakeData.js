@@ -9,8 +9,13 @@ function generateFakeUserData() {
       name: faker.person.fullName(),
       age: faker.number.int({ min: 18, max: 99 }),
       isStudent,
-      education: {
-        degree: isStudent ? true : faker.helpers.arrayElement(['Bachelor', 'Master', 'PhD', 'Diploma']),
+      education: isStudent
+    ? {
+        degree: faker.helpers.arrayElement(['Bachelor', 'Master', 'PhD', 'Diploma']),
+        institution: faker.company.name()
+      }
+    : {
+        // optionally include education with non-required fields, or omit entirely if not needed
         institution: faker.company.name()
       }
     },
