@@ -4,7 +4,6 @@ const { test, expect } = require('@playwright/test');
 const API_URL = 'http://localhost:3000/api';
 // const AUTH_TOKEN = 'fake-jwt-token';
 const generateFakeUserData = require('../fakeDataGenerate/userFakeData');
-const userResponseSchema = require('../schema/userSchemaForAJV');
 const userResponseSchema2 = require('../schema/userSchemaForAJV2');
 const scenarios = require('../schema/validationData');
 
@@ -67,6 +66,7 @@ test.describe('API Validation Tests', () => {
 
   test.only('Create user with valid data :: Faker', async ({ request }) => {
     const fakeUser = generateFakeUserData();
+    
     const res = await request
       .post(`${API_URL}/createUser`, {
         data: fakeUser,
@@ -74,7 +74,7 @@ test.describe('API Validation Tests', () => {
       })
       
       const responsejson = await res.json()
-      const validate = ajv.compile(userResponseSchema.useResponseSchema);
+      const validate = ajv.compile(userResponseSchema2.userSuccessResponseSchema);
       const valid = validate(responsejson);
   
       if (!valid) {
@@ -105,7 +105,7 @@ test.describe('API Validation Tests', () => {
         console.log("----",error.msg,"----");
       });
       
-      const validate = ajv.compile(userResponseSchema2.userResponseSchema);
+      const validate = ajv.compile(userResponseSchema2.userSuccessResponseSchema);
       const valid = validate(responsejson);
   
       if (!valid) {
@@ -146,7 +146,7 @@ test('Create user validation failures: with manual change data', async ({ reques
   fakeUser.profile.name = "n"; // too short
   fakeUser.profile.age = 0;    // too young
   fakeUser.profile.isStudent = false;
-  console.log("Request json::", fakeUser);
+  // console.log("Request json::", fakeUser);
 
   const res = await request
       .post(`${API_URL}/createUser`, {
@@ -189,25 +189,19 @@ test('Create user validation failures: with manual change data', async ({ reques
 
     console.log("API errors::", apiErrors);
     
-    console.log("---2", ajvErrors, "---2");
+    console.log("Ajv errors::", ajvErrors);
 
-    // Optional: assert specific error messages
-    // responsejson.errors.forEach(apiErr => {
-    //   const match = responsejson.errors.find(ajvErr =>
-    //     ajvErr.path.endsWith(apiErr.path) && ajvErr.message.includes(apiErr.msg)
-    //   );
-    //   expect(match, `Expected matching AJV error for path "${apiErr.path}" and message "${apiErr.msg}"`).toBeTruthy();
-    // });
+    responsejson.errors.forEach(apiErr => {
+      const match = ajvErrors.find(ajvErr =>
+        ajvErr.path.endsWith(apiErr.path) && ajvErr.message.includes(apiErr.msg)
+      );
+      expect(match, `Expected matching AJV error for path "${apiErr.path}" and message "${apiErr.msg}"`).toBeTruthy();
+    });
     
   } else {
     throw new Error(`Unexpected status code: ${status}`);
   }
 });
-
-
-
-
-
 });
 
 
@@ -249,17 +243,37 @@ test.describe('API Validation Tests', () => {
 
       const responseJson = await res.json();
       console.log("responseJson:::",responseJson);
+      const status = res.status();
+      console.log("Status check ::", status);
       
-      const errorMsgs = responseJson.errors.map(e => e.msg);
+      // const errorMsgs = responseJson.errors.map(e => e.msg);
       // expect(errorMsgs).toContain(expectedError);
 
+      const validate = ajv.compile(userResponseSchema2.userReqFailResponseSchema);
+      const valid = validate(fakeUser);
+      expect(valid, JSON.stringify(validate.errors)).toBe(false);
 
-      const responsejson = await res.json()
-      const validate = ajv.compile(userResponseSchema.useResponseSchema);
-      const valid = validate(responsejson);
-      if (!valid) {
-        console.error('AJV Validation Errors:',validate.errors);
-      }
+      const apiErrors = responseJson.errors.map(e => ({
+        path: e.path,
+        msg: e.msg
+      }));
+
+      const ajvErrors = validate.errors.map(e => ({
+        path: e.instancePath.replace(/^\//, '').replace(/\//g, '.'),  // e.g., "/errors/0/path" → "errors.0.path"
+        message: e.message
+      }));
+
+      console.log("API errors::", apiErrors);
+    console.log("Ajv errors::", ajvErrors);
+
+    // Verify all API errors have corresponding AJV errors
+    apiErrors.forEach(apiErr => {
+      const matchingAjvError = ajvErrors.find(ajvErr =>
+        ajvErr.path === apiErr.path && ajvErr.message.includes(apiErr.msg)
+      );
+      expect(matchingAjvError, `Expected AJV error for path "${apiErr.path}" with message containing "${apiErr.msg}"`).toBeTruthy();
+    });
+
     });
   }
   

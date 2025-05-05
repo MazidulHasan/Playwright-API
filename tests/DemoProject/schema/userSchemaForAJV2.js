@@ -66,7 +66,7 @@ const userSuccessResponseSchema = {
         },
         confirmPassword: {
           type: 'string',
-          const: { $data: '1/account/password' }  // Requires AJV `$data` option
+          // const: { $data: 'password' }
         }
       }
     },
@@ -169,7 +169,7 @@ const userReqFailResponseSchema = {
         },
         confirmPassword: {
           type: 'string',
-          const: { $data: '1/account/password' }
+          const: { $data: 'password' }
         }
       }
     },
