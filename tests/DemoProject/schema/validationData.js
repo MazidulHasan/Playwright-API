@@ -8,7 +8,8 @@ const userCreateDataForValidation = [
       field: 'profile.age',
       invalidValue: 2,
       expectedError: 'Must be at least 18 years old'
-    },
+    }
+    ,
     {
       field: 'account.email',
       invalidValue: 'www',

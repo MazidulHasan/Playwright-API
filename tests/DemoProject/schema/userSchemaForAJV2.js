@@ -160,7 +160,11 @@ const userReqFailResponseSchema = {
       properties: {
         email: {
           type: 'string',
-          format: 'email'
+          format: 'email',
+          errorMessage: {
+            type: 'Email must be a string',
+            format: 'Valid email is required'
+          }
         },
         password: {
           type: 'string',
@@ -169,7 +173,10 @@ const userReqFailResponseSchema = {
         },
         confirmPassword: {
           type: 'string',
-          const: { $data: 'password' }
+          const: { $data: '1/password' },
+        errorMessage: {
+          const: 'Passwords do not match'
+        }
         }
       }
     },
@@ -183,13 +190,6 @@ const userReqFailResponseSchema = {
           enum: ['web', 'mobile', 'api']
         }
       }
-    }
-  },
-  errorMessage: {
-    properties: {
-      profile: 'Invalid profile',
-      account: 'Invalid account info',
-      metadata: 'Invalid metadata'
     }
   }
 };
