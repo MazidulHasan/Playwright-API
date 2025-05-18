@@ -30,8 +30,8 @@ const validateUserCreate = [
 ];
 
 const validateUserUpdate = [
-  body('profile.name').optional().isString().trim().notEmpty(),
-  body('profile.age').optional().isInt({ min: 18 }),
+  body('profile.name').notEmpty().withMessage('Name is required').isLength({ min: 2, max: 50 }).withMessage('Must be between 2-50 characters'),
+  body('profile.age').isInt({ min: 18 }).withMessage('Must be at least 18 years old'),
   body('account.email').optional().isEmail(),
   body('updateReason').exists().withMessage('Update reason is required'),
   body('updatedFields').exists().withMessage('Updated fields array is required')

@@ -7,10 +7,8 @@ const userResponseSchema2 = require('../schema/userSchemaForAJV2');
 const scenarios = require('../schema/validationData');
 
 
-const { faker } = require('@faker-js/faker');
 const Ajv = require('ajv').default;
 const addFormats = require('ajv-formats');
-const { request } = require('http');
 
 
 const ajvErrors = require('ajv-errors');
@@ -20,7 +18,7 @@ ajvErrors(ajv);
 addFormats(ajv);
 
 let authToken;
-test.describe('API Validation Tests', () => {
+test.describe('API Update Validation Tests', () => {
   
   
   test.beforeAll(async ({ request }) => {
@@ -36,47 +34,43 @@ test.describe('API Validation Tests', () => {
     
     const userData = {
       profile: {
-        name: 'John Doe',
-        age: 30,
-        isStudent: false,
-        education: { degree: 'Bachelor' }
+      age: 10,
+      isStudent: false,
+      education: { 
+          degree: "Bachelor" 
+          }
       },
       account: {
-        email: 'john@example.com',
-        password: 'Passw0rd!',
-        confirmPassword: 'Passw0rd!'
-      },
-      metadata: {
-        acceptTerms: true,
-        signupSource: 'web'
+        email: "Jane.smith.williams@example.com"
       },
       updateReason: "Marriage name change",
       updatedFields: ["profile.name", "profile.age", "account.email"]
-    };
+      };
 
     const response = await request.put(`${API_URL}/updateUser/5`, {
       data: userData,
       headers: { 'Content-Type': 'application/json' ,'Authorization': `Bearer ${authToken}`}
     });
   
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(400);
     const body = await response.json();
-    expect(body.id).toBeDefined();
-    expect(body.updateReason).toBeDefined();
+    expect(body.errors).toBeDefined();
+    console.log("body.errors",body.errors);
+    const nameError = body.errors.find(error => error.msg === "Name is required");
+    expect(nameError).toBeDefined();
+    expect(nameError.msg).toBe("Name is required");
   });
 
-
-  test.only('Update user with valid data :: Faker', async ({ request }) => {
-    const fakeUser = generateFakeUserData();
+  test('Update user with valid data :: Faker', async ({ request }) => {
+    const fakeUser = generateFakeUserData.generateFakeUserDataForUpdate();
     
-    const res = await request
-      .post(`${API_URL}/createUser`, {
-        data: fakeUser,
-        headers: { 'Content-Type': 'application/json' ,'Authorization': `Bearer ${authToken}`}
-      })
+    const response = await request.put(`${API_URL}/updateUser/5`, {
+      data: fakeUser,
+      headers: { 'Content-Type': 'application/json' ,'Authorization': `Bearer ${authToken}`}
+    });
       
-      const responsejson = await res.json()
-      const validate = ajv.compile(userResponseSchema2.userSuccessResponseSchema);
+      const responsejson = await response.json()
+      const validate = ajv.compile(userResponseSchema2.userReqFailResponseForUpdateSchema);
       const valid = validate(responsejson);
   
       if (!valid) {
@@ -234,5 +228,4 @@ test.describe('API Validation Tests', () => {
 
     });
   }
-  
-})
+});

@@ -51,15 +51,15 @@ function generateFakeUserDataForUpdate() {
       }
     },
     account: {
-      email: faker.internet.email(),
-      password: 'Abc1234@#',
-      confirmPassword: 'Abc1234@#'
+      email: faker.internet.email()
     },
     metadata: {
       signupSource: faker.helpers.arrayElement(['web', 'mobile', 'api']),
       acceptTerms: true,
       registrationDate: new Date().toISOString()
-    }
+    },
+    updateReason:faker.lorem.lines({ min: 1, max: 3 }),
+    updatedFields:faker.helpers.arrayElements(["profile.name", "profile.age", "account.email"], { min: 2, max: 4 })
   };
 }
 

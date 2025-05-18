@@ -63,7 +63,7 @@ test.describe('API Validation Tests', () => {
 
 
   test.only('Create user with valid data :: Faker', async ({ request }) => {
-    const fakeUser = generateFakeUserData();
+    const fakeUser = generateFakeUserData.generateFakeUserData();
     
     const res = await request
       .post(`${API_URL}/createUser`, {

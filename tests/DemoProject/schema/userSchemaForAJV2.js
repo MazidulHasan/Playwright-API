@@ -194,7 +194,100 @@ const userReqFailResponseSchema = {
   }
 };
 
+const userReqFailResponseForUpdateSchema = {
+  type: 'object',
+  required: ['profile', 'account', 'metadata'],
+  properties: {
+    profile: {
+      type: 'object',
+      required: ['name', 'age', 'isStudent'],
+      properties: {
+        name: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 50
+        },
+        age: {
+          type: 'integer',
+          minimum: 18
+        },
+        isStudent: {
+          type: 'boolean'
+        },
+        education: {
+          type: 'object',
+          properties: {
+            degree: { type: 'string', minLength: 1 }
+          },
+          required: []
+        }
+      },
+      allOf: [
+        {
+          if: {
+            properties: {
+              isStudent: { const: true }
+            },
+            required: ['isStudent']
+          },
+          then: {
+            required: ['education'],
+            properties: {
+              education: {
+                type: 'object',
+                required: ['degree'],
+                properties: {
+                  degree: { type: 'string', minLength: 1 }
+                },
+                errorMessage: {
+                  required: {
+                    degree: 'Degree is required for students'
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      errorMessage: {
+        properties: {
+          name: 'Must be between 2-50 characters',
+          age: 'Must be at least 18 years old',
+          isStudent: 'Must be a boolean value'
+        }
+      }
+    },
+
+    account: {
+      type: 'object',
+      required: ['email'],
+      properties: {
+        email: {
+          type: 'string',
+          format: 'email',
+          errorMessage: {
+            type: 'Email must be a string',
+            format: 'Valid email is required'
+          }
+        }
+      }
+    },
+
+    metadata: {
+      type: 'object',
+      required: ['signupSource'],
+      properties: {
+        signupSource: {
+          type: 'string',
+          enum: ['web', 'mobile', 'api']
+        }
+      }
+    }
+  }
+};
+
 module.exports = {
   userSuccessResponseSchema,
-  userReqFailResponseSchema
+  userReqFailResponseSchema,
+  userReqFailResponseForUpdateSchema
 }
