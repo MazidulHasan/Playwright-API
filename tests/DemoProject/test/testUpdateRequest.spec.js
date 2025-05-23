@@ -83,22 +83,21 @@ test.describe('API Update Validation Tests', () => {
   });
 
   test('Create user validation failures : with manual change data', async ({ request }) => {
-    const fakeUser = generateFakeUserData();
+    const fakeUser = generateFakeUserData.generateFakeUserDataForUpdate();
     fakeUser.profile.name = "n";
     fakeUser.profile.age = 0;
 
-    const res = await request
-      .post(`${API_URL}/createUser`, {
-        data: fakeUser,
-        headers: { 'Content-Type': 'application/json' ,'Authorization': `Bearer ${authToken}`}
-      })
+    const response = await request.put(`${API_URL}/updateUser/5`, {
+      data: fakeUser,
+      headers: { 'Content-Type': 'application/json' ,'Authorization': `Bearer ${authToken}`}
+    });
       
-      const responsejson = await res.json()
+      const responsejson = await response.json()
       responsejson.errors.forEach(error => {
         console.log("----",error.msg,"----");
       });
       
-      const validate = ajv.compile(userResponseSchema2.userSuccessResponseSchema);
+      const validate = ajv.compile(userResponseSchema2.userReqFailResponseForUpdateSchema);
       const valid = validate(responsejson);
   
       if (!valid) {
@@ -110,122 +109,4 @@ test.describe('API Update Validation Tests', () => {
 
   });
 
-
-
-test('Create user validation failures: with manual change data', async ({ request }) => {
-  
-  const fakeUser = generateFakeUserData();
-  fakeUser.profile.name = "n"; // too short
-  fakeUser.profile.age = 0;    // too young
-  fakeUser.profile.isStudent = false;
-  // console.log("Request json::", fakeUser);
-
-  const res = await request
-      .post(`${API_URL}/createUser`, {
-        data: fakeUser,
-        headers: { 
-          'Content-Type': 'application/json' ,
-          'Authorization': `Bearer ${authToken}`}
-      })
-
-  const responsejson = await res.json();
-  const status = res.status();
-
-  responsejson.errors.forEach(error => {
-    console.log("----",error.msg,"----");
-  });
-  
-
-
-  if (status === 201) {
-    const validate = ajv.compile(userResponseSchema2.userSuccessResponseSchema);
-    const valid = validate(responsejson);
-    expect(valid, JSON.stringify(validate.errors)).toBe(true);
-  } else if (status === 400) {
-    const validate = ajv.compile(userResponseSchema2.userReqFailResponseSchema);
-    const valid = validate(fakeUser);
-    expect(valid, JSON.stringify(validate.errors)).toBe(false);
-
-    // console.log("All response ajv :::: ",JSON.stringify(validate.errors));
-
-    const apiErrors = responsejson.errors.map(e => ({
-      path: e.path,
-      msg: e.msg
-    }));
-
-    const ajvErrors = validate.errors.map(e => ({
-      path: e.instancePath.replace(/^\//, '').replace(/\//g, '.'),  // e.g., "/errors/0/path" → "errors.0.path"
-      message: e.message
-    }));
-
-
-    console.log("API errors::", apiErrors);
-    
-    console.log("Ajv errors::", ajvErrors);
-
-    responsejson.errors.forEach(apiErr => {
-      const match = ajvErrors.find(ajvErr =>
-        ajvErr.path.endsWith(apiErr.path) && ajvErr.message.includes(apiErr.msg)
-      );
-      expect(match, `Expected matching AJV error for path "${apiErr.path}" and message "${apiErr.msg}"`).toBeTruthy();
-    });
-    
-  } else {
-    throw new Error(`Unexpected status code: ${status}`);
-  }
-});
-});
-
-
-test.describe('API Validation Tests', () => {
-  
-  test.beforeAll(async ({ request }) => {
-    const response = await request.post(`${API_URL}/login`, {
-      data: { username: 'testuser', password: 'testpass' }
-    });
-    expect(response.ok()).toBeTruthy();
-    authToken = (await response.json()).token;
-  });
-
-  for (const { field, invalidValue, expectedError } of scenarios.userCreateDataForValidation) {
-    test(`Invalid ${field} should trigger validation`, async ({ request }) => {
-      const fakeUser = generateFakeUserData();
-      scenarios.setNestedField(fakeUser, field, invalidValue);
-
-      const res = await request.post(`${API_URL}/createUser`, {
-        data: fakeUser,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`
-        }
-      });
-      const responseJson = await res.json();
-      const status = res.status();
-
-      const validate = ajv.compile(userResponseSchema2.userReqFailResponseSchema);
-      const valid = validate(fakeUser);
-      expect(valid, JSON.stringify(validate.errors)).toBe(false);
-
-      const apiErrors = responseJson.errors.map(e => ({
-        path: e.path,
-        msg: e.msg
-      }));
-
-      const ajvErrors = validate.errors.map(e => ({
-        path: e.instancePath.replace(/^\//, '').replace(/\//g, '.'),
-        message: e.message
-      }));
-
-      console.log("API errors::", apiErrors);
-    console.log("Ajv errors::", ajvErrors);
-
-    apiErrors.forEach(apiErr => {
-      const matchingAjvError = ajvErrors.find(ajvErr =>
-        ajvErr.path === apiErr.path && ajvErr.message.includes(apiErr.msg)
-      );
-      expect(matchingAjvError, `Expected AJV error for path "${apiErr.path}" with message containing "${apiErr.msg}"`).toBeTruthy();
-    });
-
-    });
-  }
 });

@@ -114,9 +114,9 @@ test.describe('API Validation Tests', () => {
 
 
 
-test('Create user validation failures: with manual change data', async ({ request }) => {
+test('Create user validation failures: with manual change data with success and failure response', async ({ request }) => {
   
-  const fakeUser = generateFakeUserData();
+  const fakeUser = generateFakeUserData.generateFakeUserData();
   fakeUser.profile.name = "n"; // too short
   fakeUser.profile.age = 0;    // too young
   fakeUser.profile.isStudent = false;
